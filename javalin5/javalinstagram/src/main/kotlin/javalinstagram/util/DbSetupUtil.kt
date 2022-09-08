@@ -15,3 +15,9 @@ fun main() {
     }
     println("Database setup complete!")
 }
+
+object DbSetupUtil {
+    fun bootstrap() {
+        main();
+    }
+}

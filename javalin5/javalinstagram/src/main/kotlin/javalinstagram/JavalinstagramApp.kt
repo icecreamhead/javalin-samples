@@ -10,14 +10,15 @@ import javalinstagram.Role.LOGGED_IN
 import javalinstagram.account.AccountController
 import javalinstagram.like.LikeController
 import javalinstagram.photo.PhotoController
+import javalinstagram.util.DbSetupUtil
 import org.jdbi.v3.core.Jdbi
 
 val Database: Jdbi = Jdbi.create("jdbc:sqlite:javalinstagram.db")
 
-val basePath = "javalin5/javalinstagram/" // change this to "" if you are opening the project standalone
+val basePath = "" // change this to "" if you are opening the project standalone
 
 fun main() {
-
+    DbSetupUtil.bootstrap()
     val app = Javalin.create {
         it.staticFiles.add("${basePath}user-uploads", Location.EXTERNAL)
         it.staticFiles.add("${basePath}src/main/resources/public", Location.EXTERNAL)
