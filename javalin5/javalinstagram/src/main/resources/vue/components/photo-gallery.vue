@@ -9,7 +9,7 @@
       </p>
       <template v-if="photos.loaded">
         <div v-for="photo in photos.data" class="photo" :key="photo.id">
-          <img @click="openLightbox(photo.id)" :src="'/static/p/' + photo.id" />
+          <img @click="openLightbox(photo.id)" :src="'/api/photos/' + photo.id" />
           <div class="meta">
             <div>{{ formatDate(photo.created) }}</div>
             <div>
@@ -42,7 +42,7 @@
       <v-card class="photo-gallery">
         <img
           v-if="lightboxedPhoto !== null"
-          :src="`/static/p/${lightboxedPhoto}`"
+          :src="`/api/photos/${lightboxedPhoto}`"
         />
       </v-card>
     </v-dialog>

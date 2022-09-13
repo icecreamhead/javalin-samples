@@ -28,7 +28,8 @@ import java.time.ZonedDateTime
 //val Database: Jdbi = Jdbi.create("jdbc:sqlite:javalinstagram.db")
 val Database: Jdbi = Jdbi.create(getConnection())
 
-val basePath = "" // change this to "" if you are opening the project standalone
+val basePath = ""
+val DATA_DIR: String = "${System.getProperty("DATA_DIR")}/user-uploads/static/p"
 
 @Throws(URISyntaxException::class, SQLException::class)
 private fun getConnection(): Connection? {
@@ -43,7 +44,6 @@ private fun getConnection(): Connection? {
 fun main() {
 //    DbSetupUtil.bootstrap()
     val app = Javalin.create {
-        it.staticFiles.add("${basePath}user-uploads", Location.EXTERNAL)
         it.staticFiles.add("${basePath}src/main/resources/public", Location.EXTERNAL)
         it.staticFiles.enableWebjars()
         it.jetty.sessionHandler { Session.fileSessionHandler() }
@@ -78,6 +78,9 @@ fun main() {
             path("photos") {
                 get(PhotoController::getForQuery, LOGGED_IN)
                 post(PhotoController::upload, LOGGED_IN)
+                path("{id}") {
+                    get(PhotoController::getById, LOGGED_IN)
+                }
             }
             path("likes") {
                 post(LikeController::create, LOGGED_IN)
