@@ -12,34 +12,37 @@ import javalinstagram.account.AccountController
 import javalinstagram.like.LikeController
 import javalinstagram.photo.PhotoController
 import org.jdbi.v3.core.Jdbi
+import org.postgresql.ds.PGSimpleDataSource
 import java.net.URI
 import java.net.URISyntaxException
-import java.sql.Connection
-import java.sql.DriverManager
 import java.sql.SQLException
 import java.time.Instant
+import javax.sql.DataSource
+import kotlin.system.exitProcess
 
 val Database: Jdbi = Jdbi.create(getConnection())
 val DATA_DIR: String = resolveDataDir()
 
 fun resolveDataDir(): String {
-    val dataDir = System.getenv("DATA_DIR")
-    if (dataDir.isNullOrBlank()) {
-        JavalinLogger.error("No data dir configured")
-        System.exit(-1)
+    return with (System.getenv("DATA_DIR")) {
+        if (isNullOrBlank()) {
+            JavalinLogger.error("No data dir configured")
+            exitProcess(42)
+        }
+        "${this}/user-uploads/static/p"
     }
-    return "${dataDir}/user-uploads/static/p"
 }
 
-@Throws(URISyntaxException::class, SQLException::class)
-private fun getConnection(): Connection? {
-    val dbUri = URI(System.getenv("DATABASE_URL"))
-    val username: String = dbUri.getUserInfo().split(":").get(0)
-    val password: String = dbUri.getUserInfo().split(":").get(1)
-    val dbUrl = with(dbUri) {
-        "jdbc:postgresql://${getHost()}:${getPort()}${getPath()}?tcpKeepAlive=true"
+//@Throws(URISyntaxException::class, SQLException::class)
+private fun getConnection(): DataSource {
+    return with(URI(System.getenv("DATABASE_URL"))) {
+        val ds = PGSimpleDataSource()
+        ds.serverNames = arrayOf(host);
+        ds.databaseName = path.substring(1);
+        ds.user = userInfo.split(":")[0];
+        ds.password = userInfo.split(":")[1];
+        ds
     }
-    return DriverManager.getConnection(dbUrl, username, password)
 }
 
 fun main() {
