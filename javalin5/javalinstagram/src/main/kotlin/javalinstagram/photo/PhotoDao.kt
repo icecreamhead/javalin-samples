@@ -3,6 +3,7 @@ package javalinstagram.photo
 import javalinstagram.Database
 import javalinstagram.parseTimestamp
 import java.util.*
+import javax.xml.crypto.Data
 
 data class Photo(val id: String, val ownerId: String, val likes: Int, val isLiked: Boolean, val created: Date)
 
@@ -36,6 +37,14 @@ object PhotoDao {
         ).bind("ownerid", userId).map { rs, ctx ->
             Photo(rs.getString("id"), rs.getString("ownerid"), rs.getInt("like_count"), rs.getBoolean("is_liked"), rs.parseTimestamp("created"))
         }.list()
+    }
+
+    fun delete(photoId: String) = Database.withHandle<Unit, Exception> {handle ->
+        handle.createUpdate("""
+            DELETE FROM "like" WHERE photoid = :photoid;
+            DELETE FROM "photo" WHERE id = :photoid;
+        """.trimIndent()
+        ).bind("photoid", photoId).execute()
     }
 
 }

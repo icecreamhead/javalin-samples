@@ -4,8 +4,6 @@ import io.javalin.http.Context
 import io.javalin.util.JavalinLogger
 import javalinstagram.DATA_DIR
 import javalinstagram.currentUser
-import net.coobird.thumbnailator.Thumbnails
-import net.coobird.thumbnailator.geometry.Positions
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -40,10 +38,12 @@ object PhotoController {
     fun getForQuery(ctx: Context) {
         val numberToTake = ctx.queryParam("take") ?: "all"
         val ownerId = ctx.queryParam("owner-id")
+        JavalinLogger.info(PhotoDao.all(ctx.currentUser!!).orEmpty().toString())
         when {
             numberToTake == "all" && ownerId?.isNotEmpty() == true -> {
                 ctx.json(PhotoDao.findByOwnerId(ownerId))
             }
+
             numberToTake == "all" -> ctx.json(PhotoDao.all(ctx.currentUser!!))
             else -> ctx.json(PhotoDao.all(ctx.currentUser!!).take(numberToTake.toInt()))
         }
@@ -53,6 +53,16 @@ object PhotoController {
         JavalinLogger.info(ctx.pathParam("id"))
         val id = ctx.pathParam("id")
         ctx.outputStream().write(File("${DATA_DIR}/${id}").readBytes())
+    }
+
+    fun deleteById(ctx: Context) {
+        val photoId = ctx.queryParam("photo-id")
+        if (photoId.isNullOrBlank()) {
+            ctx.status(400)
+        } else {
+            JavalinLogger.info("deleting $photoId")
+            PhotoDao.delete(photoId)
+        }
     }
 
 }

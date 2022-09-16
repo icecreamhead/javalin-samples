@@ -9,7 +9,7 @@
       </p>
       <template v-if="photos.loaded">
         <div v-for="photo in photos.data" class="photo" :key="photo.id">
-          <img @click="openLightbox(photo.id)" :src="'/api/photos/' + photo.id" />
+          <img @click="openLightbox(photo)" :src="'/api/photos/' + photo.id" />
           <div class="meta">
             <div>{{ formatDate(photo.created) }}</div>
             <div>
@@ -42,8 +42,18 @@
       <v-card class="photo-gallery">
         <img
           v-if="lightboxedPhoto !== null"
-          :src="`/api/photos/${lightboxedPhoto}`"
+          :src="`/api/photos/${lightboxedPhoto.id}`"
         />
+        <div v-if="lightboxedPhoto !== null">
+          Uploaded by {{lightboxedPhoto.ownerId}}
+          <v-icon v-if="lightboxedPhoto.ownerId == $javalin.state.currentUser"
+           style="float:right;"
+           @click="deletePhoto(lightboxedPhoto.id)"
+           color="black"
+           size="24">
+           delete
+          </v-icon>
+        </div>
       </v-card>
     </v-dialog>
   </div>
@@ -58,8 +68,8 @@ Vue.component("photo-gallery", {
     photos: null,
   }),
   methods: {
-    openLightbox(photoId) {
-      this.lightboxedPhoto = photoId;
+    openLightbox(photo) {
+      this.lightboxedPhoto = photo;
       this.lightbox = true;
     },
     closeLightbox() {
@@ -79,6 +89,12 @@ Vue.component("photo-gallery", {
         .delete("/api/likes?photo-id=" + photoId)
         .then(() => this.loadPhotos());
     },
+    deletePhoto(photoId) {
+      axios
+        .delete("/api/photos?photo-id=" + photoId)
+        .then(() => this.closeLightbox())
+        .then(() => this.loadPhotos())
+    },
     loadPhotos() {
       if (this.photos !== null) {
         this.photos.refresh();
@@ -87,6 +103,7 @@ Vue.component("photo-gallery", {
         ? "owner-id=" + this.$javalin.state.currentUser
         : "";
       let take = this.take ? "take=" + this.take : "";
+      console.log("reloading photos")
       this.photos = new LoadableData("/api/photos?" + owner + "&" + take);
     },
   },

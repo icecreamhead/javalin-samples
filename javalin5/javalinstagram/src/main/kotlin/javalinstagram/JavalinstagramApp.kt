@@ -27,9 +27,16 @@ import java.time.ZonedDateTime
 
 //val Database: Jdbi = Jdbi.create("jdbc:sqlite:javalinstagram.db")
 val Database: Jdbi = Jdbi.create(getConnection())
+val DATA_DIR: String = resolveDataDir()
 
-val basePath = ""
-val DATA_DIR: String = "${System.getProperty("DATA_DIR")}/user-uploads/static/p"
+fun resolveDataDir(): String {
+    val dataDir = System.getenv("DATA_DIR")
+    if (dataDir.isNullOrBlank()) {
+        JavalinLogger.error("No data dir configured")
+        System.exit(-1)
+    }
+    return "${dataDir}/user-uploads/static/p"
+}
 
 @Throws(URISyntaxException::class, SQLException::class)
 private fun getConnection(): Connection? {
@@ -44,7 +51,7 @@ private fun getConnection(): Connection? {
 fun main() {
 //    DbSetupUtil.bootstrap()
     val app = Javalin.create {
-        it.staticFiles.add("${basePath}src/main/resources/public", Location.EXTERNAL)
+        it.staticFiles.add("src/main/resources/public", Location.EXTERNAL)
         it.staticFiles.enableWebjars()
         it.jetty.sessionHandler { Session.fileSessionHandler() }
         it.accessManager { handler, ctx, permitted ->
@@ -58,9 +65,9 @@ fun main() {
         it.compression.brotliAndGzip()
         it.vue.enableCspAndNonces = true
         it.vue.stateFunction = { ctx -> mapOf("currentUser" to ctx.currentUser) }
-        it.vue.rootDirectory("${basePath}src/main/resources/vue", Location.EXTERNAL) // comment out this line if you are opening the project standalone
+        it.vue.rootDirectory("src/main/resources/vue", Location.EXTERNAL) // comment out this line if you are opening the project standalone
         it.requestLogger.http { ctx, ms -> with(ctx) {
-            JavalinLogger.info("Req: ${Instant.now()} ${method()} ${path()} ${status().code}")
+            JavalinLogger.info("Req: ${Instant.now()} ${method()} ${path()} ${status().code} $ms")
         }}
 
     }.start(7070)
@@ -78,6 +85,7 @@ fun main() {
             path("photos") {
                 get(PhotoController::getForQuery, LOGGED_IN)
                 post(PhotoController::upload, LOGGED_IN)
+                delete(PhotoController::deleteById, LOGGED_IN)
                 path("{id}") {
                     get(PhotoController::getById, LOGGED_IN)
                 }
